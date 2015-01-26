@@ -7,13 +7,16 @@ output:
 
 
 ## Loading and preprocessing the data
-
+```{r}
+ActivityData <- read.csv("./activity.csv")
+```
 
 
 ## What is mean total number of steps taken per day?
-
-
-
+```{r}
+library(plyr) # Load plyr package in case it is not already loaded
+MeanAD <- ddply(ActivityData, 'date', summarize, meansteps = mean(steps,na.rm=TRUE))
+```
 ## What is the average daily activity pattern?
 
 
