@@ -8,21 +8,26 @@ output:
 
 ## Loading and preprocessing the data
 ```{r}
+## load necessary packages
+library(plyr)
+library(ggplot2)
+library(scales)
+## Load data
 ActivityData <- read.csv("./activity.csv")
+## Merge date and interval variables
+ActivityData <- transform(ActivityData, yday = strptime( paste(date,formatC(interval,width=4,flag="0")), "%Y-%m-%d %H%M"), tday = strptime( paste("1970-01-01",formatC(interval,width=4,flag="0")), "%Y-%m-%d %H%M"))
+
 ```
 
 
 ## What is mean total number of steps taken per day?
 ```{r}
-library(plyr) # Load plyr and ggplot2 package in case it is not already loaded
-library(ggplot2)
 sumAD <- ddply(ActivityData, 'date', summarize, sumsteps = sum(steps))
 fr <- ggplot(sumAD, aes(sumsteps))
 fr <- fr + geom_histogram(binwidth=2500,fill="darkred")
 fr <- fr + scale_x_continuous(limits=c(0,20000))
 fr <- fr + labs(y="Frequency",x="Number of steps", title="Frequency of number of steps taken each day in the period")
 print(fr)
-
 ```
 
 ```{r}
@@ -31,15 +36,34 @@ medAD <- median(sumAD$sumsteps,na.rm=TRUE)
 ```
 During the period the mean number of steps per day was `r meanAD` and the median was `r medAD`.
 
+## What is the average daily activity pattern?
 ```{r}
+## Time series line graph
+aveAD <- aggregate(steps ~ tday , ActivityData, FUN=mean)
+ts <- ggplot(aveAD, aes(tday,steps))
+ts <- ts + geom_line(color="darkred")
+ts <- ts + scale_x_datetime(labels=date_format("%H:%M %p"))
+ts <- ts + labs(y="Steps",x="Time of day", title="Average number of steps in 5-minute intervals during the day")
+print(ts)
 
 ```
-## What is the average daily activity pattern?
+
+```{r}
+## find the time ehen max number of steps is taken
+ms<-aveAD[which.max(aveAD$steps),]
+mm<-strftime(ms$tday, format="%H:%M %p")
+```
+The 5/minute interval when the largest average number of steps were measured happened at `r mm` 
+
+## Inputing missing values
+
+```{r}
 
 
-
-## Imputing missing values
-
+```
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+```{r}
+
+```
