@@ -15,8 +15,8 @@ library(scales)
 ## Load data
 ActivityData <- read.csv("./activity.csv")
 ## Merge date and interval variables
-ActivityData <- transform(ActivityData, yday = strptime( paste(date,formatC(interval,width=4,flag="0")), "%Y-%m-%d %H%M"), tday = strptime( paste("1970-01-01",formatC(interval,width=4,flag="0")), "%Y-%m-%d %H%M"))
-
+ActivityData <- transform(ActivityData, tday = strptime( paste("1970-01-01",
+                        formatC(interval,width=4,flag="0")), "%Y-%m-%d %H%M"))
 ```
 
 
@@ -26,15 +26,17 @@ sumAD <- ddply(ActivityData, 'date', summarize, sumsteps = sum(steps))
 fr <- ggplot(sumAD, aes(sumsteps))
 fr <- fr + geom_histogram(binwidth=2500,fill="darkred")
 fr <- fr + scale_x_continuous(limits=c(0,20000))
-fr <- fr + labs(y="Frequency",x="Number of steps", title="Frequency of number of steps taken each day in the period")
+fr <- fr + labs(y="Frequency",x="Number of steps", title="Frequency of number of 
+                steps taken each day in the period")
 print(fr)
 ```
 
 ```{r}
-meanAD <- as.integer(mean(sumAD$sumsteps,na.rm=TRUE)) # calculate the daily mean steps
+meanAD <- as.integer(mean(sumAD$sumsteps,na.rm=TRUE)) # calc the daily mean steps
 medAD <- median(sumAD$sumsteps,na.rm=TRUE)
 ```
-During the period the mean number of steps per day was `r meanAD` and the median was `r medAD`.
+During the period the mean number of steps per day was `r meanAD` and the median 
+was `r medAD`.
 
 ## What is the average daily activity pattern?
 ```{r}
@@ -43,7 +45,8 @@ aveAD <- aggregate(steps ~ tday , ActivityData, FUN=mean)
 ts <- ggplot(aveAD, aes(tday,steps))
 ts <- ts + geom_line(color="darkred")
 ts <- ts + scale_x_datetime(labels=date_format("%H:%M %p"))
-ts <- ts + labs(y="Steps",x="Time of day", title="Average number of steps in 5-minute intervals during the day")
+ts <- ts + labs(y="Steps",x="Time of day", title="Average number of steps in 
+                5-minute intervals during the day")
 print(ts)
 
 ```
@@ -52,15 +55,57 @@ print(ts)
 ## find the time ehen max number of steps is taken
 ms<-aveAD[which.max(aveAD$steps),]
 mm<-strftime(ms$tday, format="%H:%M %p")
+mmax<-as.integer(ms$steps)
 ```
-The 5/minute interval when the largest average number of steps were measured happened at `r mm` 
+The 5/minute interval when the largest average number of steps (`r mmax`) were measured 
+happened at `r mm` 
 
 ## Inputing missing values
 
 ```{r}
-
-
+numbermissing<-sum(is.na(ActivityData$steps))
 ```
+The dataset has `r numbermissing` rows that are missing values. We will attempt 
+to clear up this dataset by replacing the missing values with the mean for the 
+same interval, taken over the other days.
+
+
+```{r}
+ActivityData2 <- ActivityData # Make a copy of dataset
+aveADint <- aggregate(steps ~ interval , ActivityData2, FUN=mean)
+## Loop through step column and replace NA with previously calc averages
+for (i in 1:nrow(ActivityData2)) {
+      if (is.na(ActivityData2[i,"steps"])) {
+            rint<-ActivityData2[i,"interval"]
+            ind <- which(rint == aveADint[,"interval"])
+            ActivityData2[i,"steps"] <- aveADint[ind , "steps"]            
+            } 
+      }
+```
+
+```{r}
+numbermissing<-sum(is.na(ActivityData2$steps))
+```
+The recoded dataset now has `r numbermissing` rows that are missing values. 
+
+### Plotting the recoded dataset with same settings as before
+```{r}
+sumAD <- ddply(ActivityData2, 'date', summarize, sumsteps = sum(steps))
+fr <- ggplot(sumAD, aes(sumsteps))
+fr <- fr + geom_histogram(binwidth=2500,fill="darkred")
+fr <- fr + scale_x_continuous(limits=c(0,20000))
+fr <- fr + labs(y="Frequency",x="Number of steps", title="Frequency of number of 
+                steps taken each day in the period")
+print(fr)
+```
+
+```{r}
+meanAD <- as.integer(mean(sumAD$sumsteps,na.rm=TRUE)) # calc the daily mean steps
+medAD <- as.integer(median(sumAD$sumsteps,na.rm=TRUE))
+```
+During the period the mean number of steps per day was `r meanAD` and the median 
+was `r medAD`.
+We can see that the mean number of steps is unchanged from the initial datset, and that the median changed with one step, out of over 10,000 steps. The difference seems acceptable.
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
