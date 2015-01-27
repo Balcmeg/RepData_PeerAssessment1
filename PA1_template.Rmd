@@ -15,7 +15,8 @@ library(scales)
 ## Load data
 ActivityData <- read.csv("./activity.csv")
 ## Merge date and interval variables
-ActivityData <- transform(ActivityData, tday = strptime( paste("1970-01-01",
+ActivityData <- transform(ActivityData, rday = strptime( paste(date,
+                        formatC(interval,width=4,flag="0")), "%Y-%m-%d %H%M"),tday = strptime( paste("1970-01-01",
                         formatC(interval,width=4,flag="0")), "%Y-%m-%d %H%M"))
 ```
 
@@ -109,6 +110,11 @@ We can see that the mean number of steps is unchanged from the initial datset, a
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
-```{r}
 
+First code a new column for Weekday/Weekend
+```{r}
+ActivityData2$wday<-weekdays(ActivityData2$rday)
+ActivityData2$wdayfact<- as.factor(c("weekend", "weekday"))
+#ActivityData2$wday[ActivityData2$wday == "Sunday" | ActivityData2$wday == "Saturday" ,5]<- factor("weekend")
+#ActivityData2$wday[!(ActivityData2$wday == "Sunday" | ActivityData2$wday == "Saturday"),5 ]<- factor("weekday")
 ```
